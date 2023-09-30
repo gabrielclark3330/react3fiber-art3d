@@ -1,9 +1,9 @@
 import { Suspense, useMemo, useRef, useEffect, useState } from 'react';
 import { Canvas, extend, useThree, useFrame } from '@react-three/fiber';
-import { Environment, GizmoHelper, GizmoViewport, OrbitControls, Grid, Center, PerspectiveCamera, Text3D, Box } from '@react-three/drei';
-import { Html, useProgress, Line } from '@react-three/drei';
-import niceColors from 'nice-color-palettes'
-import * as THREE from 'three'
+import { Environment, GizmoHelper, GizmoViewport, OrbitControls, Center, PerspectiveCamera, Text3D } from '@react-three/drei';
+import { Html, useProgress } from '@react-three/drei';
+import niceColors from 'nice-color-palettes';
+import * as THREE from 'three';
 
 function Loader() {
   const { progress } = useProgress()
@@ -70,7 +70,6 @@ function Cell(props) {
     const x = props.position[0];
     const y = props.position[1];
     const z = props.position[2];
-    //const thickness = .015;
     const thickness = .015;
     var length = 1;
     const lineSpread = length/2;
@@ -129,44 +128,74 @@ function Cell(props) {
     </>;
 }
 
-const tempColor = new THREE.Color()
-const data = Array.from({ length: 1000 }, () => ({ color: niceColors[17][Math.floor(Math.random() * 5)], scale: 1 }))
 function Boxes() {
-    const [hovered, set] = useState()
     const meshRef = useRef()
-    const prevRef = useRef()
-    useEffect(() => void (prevRef.current = hovered), [hovered])
-    const colorArray = useMemo(() => Float32Array.from(new Array(1000).fill().flatMap((_, i) => tempColor.set(data[i].color).toArray())), []);
     const tempObject = new THREE.Object3D()
-  
+    let cellCount = 5**3;
+    const thickness = .015;
+    var length = 1;
+    const lineSpread = length/2;
+    length += thickness;
+
     useFrame((state) => {
       let i = 0
-      for (let x = 0; x < 10; x++)
-        for (let y = 0; y < 10; y++)
-          for (let z = 0; z < 10; z++) {
-            const id = i++
-            tempObject.position.set(5 - x, 5 - y, 5 - z)
-            if (hovered !== prevRef.Current) {
-              ;(id === hovered ? tempColor.setRGB(10, 10, 10) : tempColor.set(data[id].color)).toArray(colorArray, id * 3)
-              meshRef.current.geometry.attributes.color.needsUpdate = true
+      for (let x = -Math.pow(cellCount, 1/3)/2; x < Math.pow(cellCount, 1/3)/2; x++){
+        for (let y = -Math.pow(cellCount, 1/3)/2; y < Math.pow(cellCount, 1/3)/2; y++){
+            for (let z = -Math.pow(cellCount, 1/3)/2; z < Math.pow(cellCount, 1/3)/2; z++){
+                for (let e=0; e<12; e++) {
+                    const id = i++;
+                    tempObject.rotation.x = 0;
+                    tempObject.rotation.y = 0;
+                    tempObject.rotation.z = 0;
+                    if (e%3===0) {
+                        if (e%4===0) {
+                            tempObject.position.set(0+x, lineSpread+y, lineSpread+z)
+                        }else if (e%4===1) {
+                            tempObject.position.set(0+x, lineSpread+y, -lineSpread+z)
+                        }else if (e%4===2) {
+                            tempObject.position.set(0+x, -lineSpread+y, lineSpread+z)
+                        }else if (e%4===3) {
+                            tempObject.position.set(0+x, -lineSpread+y, -lineSpread+z)
+                        }
+                    }else if(e%3===1) {
+                        tempObject.rotation.z = Math.PI/2;
+                        if (e%4===0) {
+                            tempObject.position.set(lineSpread+x, 0+y, lineSpread+z)
+                        }else if (e%4===1) {                    
+                            tempObject.position.set(lineSpread+x, 0+y, -lineSpread+z)
+                        }else if (e%4===2) {                    
+                            tempObject.position.set(-lineSpread+x, 0+y, lineSpread+z)
+                        }else if (e%4===3) {                    
+                            tempObject.position.set(-lineSpread+x, 0+y, -lineSpread+z)
+                        }
+                    }else if(e%3===2) {
+                        tempObject.rotation.y = Math.PI/2;
+                        if (e%4===0) {
+                            tempObject.position.set(lineSpread+x, lineSpread+y, 0+z)
+                        }else if (e%4===1) {                    
+                            tempObject.position.set(lineSpread+x, -lineSpread+y, 0+z)
+                        }else if (e%4===2) {                    
+                            tempObject.position.set(-lineSpread+x, lineSpread+y, 0+z)
+                        }else if (e%4===3) {                    
+                            tempObject.position.set(-lineSpread+x, -lineSpread+y, 0+z)
+                        }
+                    }
+                    tempObject.updateMatrix();
+                    meshRef.current.setMatrixAt(id, tempObject.matrix);
+                }
             }
-            const scale = (data[id].scale = THREE.MathUtils.lerp(data[id].scale, id === hovered ? 1.5 : 1, 0.1))
-            tempObject.scale.setScalar(scale)
-            tempObject.updateMatrix()
-            meshRef.current.setMatrixAt(id, tempObject.matrix)
-          }
+        }
+    }
       meshRef.current.instanceMatrix.needsUpdate = true
     })
 
     return (
       <instancedMesh
         ref={meshRef}
-        args={[null, null, 1000]}
-        onPointerMove={(e) => (e.stopPropagation(), set(e.instanceId))}
-        onPointerOut={(e) => set(undefined)}>
-        <boxGeometry args={[0.6, 0.6, 0.6]}>
-          <instancedBufferAttribute attach="attributes-color" args={[colorArray, 3]} />
+        args={[null, null, cellCount*12]}>
+        <boxGeometry args={[length, thickness, thickness]}>
         </boxGeometry>
+
         <meshBasicMaterial toneMapped={false} vertexColors />
       </instancedMesh>
     )
@@ -188,24 +217,23 @@ function Scene(props) {
             <Suspense fallback={<Loader/>}>
                 <Center>
                 <Text3D
+                    position={[.9,.75,1.6]}
                     curveSegments={32}
                     bevelEnabled
                     bevelSize={0.04}
                     bevelThickness={0.1}
-                    height={0.5}
+                    height={0.3}
                     lineHeight={0.5}
-                    letterSpacing={-0.06}
-                    size={1.5}
+                    size={.7}
                     font="/Inter_Bold.json">
-                    {"yoYO"}
+                    {"x"}
                     <meshNormalMaterial />
                 </Text3D>
                 </Center>
             </Suspense>
             <Environment preset="sunset" background blur={0.5}/>
 
-            <Boxes></Boxes>
-            <Cell position={[10, 11, 3]}/>
+            <Boxes/>
             <GizmoHelper alignment="bottom-right" margin={[80, 80]}>
                 <GizmoViewport axisColors={['#9d4b4b', '#2f7f4f', '#3b5b9d']} labelColor="white" />
             </GizmoHelper>
