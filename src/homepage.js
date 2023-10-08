@@ -1,9 +1,13 @@
 import { Suspense, useMemo, useRef, useEffect, useState } from 'react';
 import { Canvas, extend, useThree, useFrame } from '@react-three/fiber';
 import { Environment, GizmoHelper, GizmoViewport, OrbitControls, Center, PerspectiveCamera, Text3D } from '@react-three/drei';
-import { Html, useProgress } from '@react-three/drei';
+import { Html, useProgress, Effects } from '@react-three/drei';
 import niceColors from 'nice-color-palettes';
+import { EffectComposer, N8AO, SSAO } from "@react-three/postprocessing"
+
 import * as THREE from 'three';
+THREE.ColorManagement.legacyMode = false
+
 
 function Loader() {
   const { progress } = useProgress()
@@ -74,64 +78,105 @@ function Cell(props) {
     var length = 1;
     const lineSpread = length/2;
     length += thickness;
+    const color = "#6d6875";
+    const wireMaterial = new THREE.MeshLambertMaterial({ color: color, emissive: color });
+    const castShadow = false;
+    const receiveShadow = false;
     return <>
-        <mesh position={[0+x, -lineSpread+y, -lineSpread+z]}>
+        <mesh position={[0+x, -lineSpread+y, -lineSpread+z]}
+        castShadow={castShadow}
+        receiveShadow={receiveShadow}
+        material={wireMaterial}
+        >
             <boxGeometry args={[length, thickness, thickness]} />
-            <meshStandardMaterial attach="material" color="black" />
         </mesh>
-        <mesh position={[0+x, lineSpread+y, -lineSpread+z]}>
+        <mesh position={[0+x, lineSpread+y, -lineSpread+z]}
+        castShadow={castShadow}
+        receiveShadow={receiveShadow}
+        material={wireMaterial}
+        >
             <boxGeometry args={[length, thickness, thickness]} />
-            <meshStandardMaterial attach="material" color="black" />
         </mesh>
-        <mesh position={[0+x, -lineSpread+y, lineSpread+z]}>
+        <mesh position={[0+x, -lineSpread+y, lineSpread+z]}
+        castShadow={castShadow}
+        receiveShadow={receiveShadow}
+        material={wireMaterial}
+        >
             <boxGeometry args={[length, thickness, thickness]} />
-            <meshStandardMaterial attach="material" color="black" />
         </mesh>
-        <mesh position={[0+x, lineSpread+y, lineSpread+z]}>
+        <mesh position={[0+x, lineSpread+y, lineSpread+z]}
+        castShadow={castShadow}
+        receiveShadow={receiveShadow}
+        material={wireMaterial}
+        >
             <boxGeometry args={[length, thickness, thickness]} />
-            <meshStandardMaterial attach="material" color="black" />
         </mesh>
 
-        <mesh position={[-lineSpread+x, 0+y, lineSpread+z]}>
+        <mesh position={[-lineSpread+x, 0+y, lineSpread+z]}
+        castShadow={castShadow}
+        receiveShadow={receiveShadow}
+        material={wireMaterial}
+        >
             <boxGeometry args={[thickness, length, thickness]} />
-            <meshStandardMaterial attach="material" color="black" />
         </mesh>
-        <mesh position={[lineSpread+x, 0+y, lineSpread+z]}>
+        <mesh position={[lineSpread+x, 0+y, lineSpread+z]}
+        castShadow={castShadow}
+        receiveShadow={receiveShadow}
+        material={wireMaterial}
+        >
             <boxGeometry args={[thickness, length, thickness]} />
-            <meshStandardMaterial attach="material" color="black" />
         </mesh>
-        <mesh position={[-lineSpread+x, 0+y, -lineSpread+z]}>
+        <mesh position={[-lineSpread+x, 0+y, -lineSpread+z]}
+        castShadow={castShadow}
+        receiveShadow={receiveShadow}
+        material={wireMaterial}
+        >
             <boxGeometry args={[thickness, length, thickness]} />
-            <meshStandardMaterial attach="material" color="black" />
         </mesh>
-        <mesh position={[lineSpread+x, 0+y, -lineSpread+z]}>
+        <mesh position={[lineSpread+x, 0+y, -lineSpread+z]}
+        castShadow={castShadow}
+        receiveShadow={receiveShadow}
+        material={wireMaterial}
+        >
             <boxGeometry args={[thickness, length, thickness]} />
-            <meshStandardMaterial attach="material" color="black" />
         </mesh>
 
-        <mesh position={[lineSpread+x, -lineSpread+y, 0+z]}>
+        <mesh position={[lineSpread+x, -lineSpread+y, 0+z]}
+        castShadow={castShadow}
+        receiveShadow={receiveShadow}
+        material={wireMaterial}
+        >
             <boxGeometry args={[thickness, thickness, length]} />
-            <meshStandardMaterial attach="material" color="black" />
         </mesh>
-        <mesh position={[-lineSpread+x, -lineSpread+y, 0+z]}>
+        <mesh position={[-lineSpread+x, -lineSpread+y, 0+z]}
+        castShadow={castShadow}
+        receiveShadow={receiveShadow}
+        material={wireMaterial}
+        >
             <boxGeometry args={[thickness, thickness, length]} />
-            <meshStandardMaterial attach="material" color="black" />
         </mesh>
-        <mesh position={[lineSpread+x, lineSpread+y, 0+z]}>
+        <mesh position={[lineSpread+x, lineSpread+y, 0+z]}
+        castShadow={castShadow}
+        receiveShadow={receiveShadow}
+        material={wireMaterial}
+        >
             <boxGeometry args={[thickness, thickness, length]} />
-            <meshStandardMaterial attach="material" color="black" />
         </mesh>
-        <mesh position={[-lineSpread+x, lineSpread+y, 0+z]}>
+        <mesh position={[-lineSpread+x, lineSpread+y, 0+z]}
+        castShadow={castShadow}
+        receiveShadow={receiveShadow}
+        material={wireMaterial}
+        >
             <boxGeometry args={[thickness, thickness, length]} />
-            <meshStandardMaterial attach="material" color="black" />
         </mesh>
     </>;
 }
 
+/*
 function Boxes() {
     const meshRef = useRef()
     const tempObject = new THREE.Object3D()
-    let cellCount = 5**3;
+    let cellCount = 4**3;
     const thickness = .015;
     var length = 1;
     const lineSpread = length/2;
@@ -139,9 +184,9 @@ function Boxes() {
 
     useFrame((state) => {
       let i = 0
-      for (let x = -Math.pow(cellCount, 1/3)/2; x < Math.pow(cellCount, 1/3)/2; x++){
-        for (let y = -Math.pow(cellCount, 1/3)/2; y < Math.pow(cellCount, 1/3)/2; y++){
-            for (let z = -Math.pow(cellCount, 1/3)/2; z < Math.pow(cellCount, 1/3)/2; z++){
+      for (let x = Math.floor(-Math.pow(cellCount, 1/3)/2); x < Math.floor(Math.pow(cellCount, 1/3)/2); x++){
+        for (let y = Math.floor(-Math.pow(cellCount, 1/3)/2); y < Math.floor(Math.pow(cellCount, 1/3)/2); y++){
+            for (let z = Math.floor(-Math.pow(cellCount, 1/3)/2); z < Math.floor(Math.pow(cellCount, 1/3)/2); z++){
                 for (let e=0; e<12; e++) {
                     const id = i++;
                     tempObject.rotation.x = 0;
@@ -191,15 +236,67 @@ function Boxes() {
 
     return (
       <instancedMesh
+        castShadow
+        receiveShadow
         ref={meshRef}
         args={[null, null, cellCount*12]}>
-        <boxGeometry args={[length, thickness, thickness]}>
-        </boxGeometry>
+        <boxGeometry args={[length, thickness, thickness]} />
 
         <meshBasicMaterial toneMapped={false} vertexColors />
       </instancedMesh>
     )
   }
+const baubleMaterial = new THREE.MeshLambertMaterial({ color: "#c0a0a0", emissive: "red" })
+<meshBasicMaterial color={niceColors[17][Math.floor(Math.random() * 5)]}/>
+*/
+
+function Cells(props) {
+    let programState = props.programState;
+    let toRender = [];
+    const sizeZ = programState.length;
+    const sizeY = programState[0].length;
+    const sizeX = programState[0][0].length;
+    for (let x=0; x<sizeX; x++) {
+        for (let y=0; y<sizeY; y++) {
+            for (let z=0; z<sizeZ; z++) {
+                toRender.push(<Cell position={[x,y,z]}/>);
+                if (programState[z][y][x]!=="") {
+                    toRender.push(
+                    <Text3D
+                        castShadow = {false}
+                        receiveShadow = {false}
+                        position={[x-.2, y-.275, z-.1]}
+                        curveSegments={500}
+                        bevelEnabled
+                        bevelSize={0.01}
+                        bevelThickness={0.1}
+                        height={0.01}
+                        lineHeight={0.5}
+                        size={.7}
+                        font="/Inter_Bold.json"
+                        material={new THREE.MeshLambertMaterial({ color: niceColors[17][Math.floor(Math.random() * 5)], emissive: niceColors[17][Math.floor(Math.random() * 5)] })}
+                        >
+                        {programState[z][y][x]}
+                    </Text3D>
+                    );
+                }
+            }
+        }
+    }
+    return toRender;
+}
+
+let exampleState = [[["I", "l"],["n","y"]],[["",""],["!","."]]];
+/*
+
+            <mesh position={[0, -2, 0]}
+            castShadow 
+            receiveShadow
+            material={new THREE.MeshLambertMaterial({ color: "white", emissive: "white" })}
+            >
+                <boxGeometry args={[10, .1, 10]} />
+            </mesh>
+            */
 
 function Scene(props) {
     return (
@@ -210,30 +307,9 @@ function Scene(props) {
                 near={0.1}
                 far={100}
                 position={[0, 10, 0]}
-                rotation={[-0.6,0,0]}/>
+                rotation={[-0.6, 0, 0]}/>
             <OrbitControls />
-            <ambientLight intensity={0.3} color="#FFFFFF" />
-            <pointLight intensity={1.0} position={[10, 10, 10]} />
-            <Suspense fallback={<Loader/>}>
-                <Center>
-                <Text3D
-                    position={[.9,.75,1.6]}
-                    curveSegments={32}
-                    bevelEnabled
-                    bevelSize={0.04}
-                    bevelThickness={0.1}
-                    height={0.3}
-                    lineHeight={0.5}
-                    size={.7}
-                    font="/Inter_Bold.json">
-                    {"x"}
-                    <meshNormalMaterial />
-                </Text3D>
-                </Center>
-            </Suspense>
-            <Environment preset="sunset" background blur={0.5}/>
-
-            <Boxes/>
+            <Cells programState={exampleState} />
             <GizmoHelper alignment="bottom-right" margin={[80, 80]}>
                 <GizmoViewport axisColors={['#9d4b4b', '#2f7f4f', '#3b5b9d']} labelColor="white" />
             </GizmoHelper>
@@ -241,6 +317,8 @@ function Scene(props) {
     );
 }
 
+
+// #1c2e4a #f0f0f0 
 function HomePage() {
     return (
     <div className="flex flex-row">
@@ -249,9 +327,24 @@ function HomePage() {
                 <Header/>
             </div>
             <div className="h-screen w-screen absolute top-0 left-0">
-                <Canvas>
-                    {/*<color attach="background" args={['#f0f0f0']} />*/}
+                <Canvas camera={{ near: 1, far: 40}}
+                shadows
+                gl={{ alpha: true, stencil: false, depth: false, antialias: false }}
+                onCreated={(state) => (state.gl.toneMappingExposure = 1.5)}
+                >
+                    <color attach="background" args={['#f0f0f0']} />
+                    <ambientLight intensity={0.5} />
+                    <directionalLight castShadow position={[2.5, 8, 5]} intensity={1.5} shadow-mapSize={1024}>
+                        <orthographicCamera attach="shadow-camera" args={[-10, 10, -10, 10, 0.1, 50]} />
+                    </directionalLight>
+                    <pointLight position={[-10, 0, -20]} color="white" intensity={1} />
+                    <pointLight position={[0, -10, 0]} intensity={1} />
                     <Scene/>
+                    <Environment files={"../adams_place_bridge_4k.exr"} background blur={.50}/>
+                    <EffectComposer disableNormalPass multisampling={0}>
+                        <N8AO color="white" aoRadius={2} intensity={1} />
+                        <SSAO />
+                    </EffectComposer>
                 </Canvas>
             </div>
         </main>
